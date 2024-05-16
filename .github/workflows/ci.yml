@@ -8,7 +8,7 @@ on:
     paths-ignore:
       - "Jenkinsfile"
       - ".git**"
-    pull_request:
+  pull_request:
 
 
 jobs:
