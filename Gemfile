@@ -2,7 +2,6 @@ source "https://rubygems.org"
 ruby File.read(".ruby-version").strip
 
 gem "dotenv"
-gem "octokit"
 gem "puma"
 gem "rubocop-govuk", require: false
 gem "ruby-trello"
