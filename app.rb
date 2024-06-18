@@ -1,7 +1,6 @@
 require "sinatra/base"
 require "dotenv"
 Dotenv.load
-require "./lib/github_pull_request"
 require "json"
 require "logger"
 
@@ -17,32 +16,16 @@ class GithubTrelloPoster < Sinatra::Base
 
   post "/payload" do
     payload = JSON.parse(request.body.read)
-    return [200, "Not processing payload"] if review_requested?(payload)
 
-    if required_payload_fields(payload).present?
-      [200, ""]
-    else
-      return [400, "Required payload fields missing"]
-    end
-    trello_poster = TrelloPoster.new
-    GitHubPullRequest.new(
-      closed: payload["action"] == "closed",
-      pull_request_id: payload["number"],
-      repo_id: payload["repository"]["id"],
-      trello_poster: trello_poster,
-    ).call
-  end
+    return [400, "Error: Required payload fields missing"] unless %w[action body html_url].all? { |k| payload.key? k }
 
-  def required_payload_fields(payload)
-    return false if payload.nil?
+    return [200, "Skip: review_requested events are ignored"] if payload["action"] == "review_requested"
 
-    payload["action"].present? &&
-      payload["number"].present? &&
-      payload.dig("repository", "id").present?
-  end
+    trello_card_id = payload["body"].match(%r{https://trello.com/c/(\w{8})}) { |m| m[1] }
+    return [200, "Skip: PR description doesn't contain Trello link"] if trello_card_id.nil?
 
-  def review_requested?(payload)
-    payload["action"] == "review_requested"
+    TrelloPoster.new.post!(payload["html_url"], trello_card_id, payload["action"] == "closed")
+    return [200, "OK"]
   end
 
   # start the server if ruby file executed directly
