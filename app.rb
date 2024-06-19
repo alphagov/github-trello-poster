@@ -1,6 +1,7 @@
 require "sinatra/base"
 require "dotenv"
 Dotenv.load
+require "./lib/trello_poster"
 require "json"
 require "logger"
 
