@@ -4,7 +4,7 @@ Dotenv.load
 require "json"
 require "logger"
 
-class GithubTrelloPoster < Sinatra::Base
+class App < Sinatra::Base
   configure :production, :development do
     enable :logging
   end

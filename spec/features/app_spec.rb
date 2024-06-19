@@ -1,9 +1,9 @@
 require "spec_helper"
-RSpec.describe GithubTrelloPoster do
+RSpec.describe App do
   include Rack::Test::Methods
 
   def app
-    GithubTrelloPoster.new
+    App.new
   end
 
   describe "GET '/'" do
