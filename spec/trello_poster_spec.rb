@@ -4,9 +4,9 @@ describe TrelloPoster do
   subject(:trello_poster) { described_class.new }
 
   let(:trello_client) do
-    double Trello::Client,
-           find: trello_card_no_checklist,
-           create: pull_request_checklist
+    instance_double Trello::Client,
+                    find: trello_card_no_checklist,
+                    create: pull_request_checklist
   end
 
   let(:another_checklist) do
@@ -51,7 +51,7 @@ describe TrelloPoster do
     allow(Trello::Client).to receive(:new).and_return(trello_client)
   end
 
-  context "When a Trello card contains a 'Pull Requests' checklist" do
+  context "when a Trello card contains a 'Pull Requests' checklist" do
     before do
       allow(trello_client).to receive(:find).and_return(trello_card)
       allow(pull_request_checklist).to receive(:add_item)
@@ -60,7 +60,7 @@ describe TrelloPoster do
 
     context "and trello_card_id is valid" do
       it "finds the Trello card via the Trello API" do
-        expect(trello_client).to receive(:find).and_return(trello_card)
+        allow(trello_client).to receive(:find).and_return(trello_card)
 
         trello_poster.post!(
           "https://github.com/gov-test-org/project-a/pull/2", "abcd1234", false
@@ -118,7 +118,7 @@ describe TrelloPoster do
     end
   end
 
-  context "When a Trello card does not contain a 'Pull Requests' checklist" do
+  context "when a Trello card does not contain a 'Pull Requests' checklist" do
     before do
       allow(trello_client)
         .to receive(:find).and_return(trello_card_no_checklist)
@@ -127,7 +127,7 @@ describe TrelloPoster do
     end
 
     it "creates a checklist via the Trello API" do
-      expect(trello_client).to receive(:create).and_return(pull_request_checklist)
+      allow(trello_client).to receive(:create).and_return(pull_request_checklist)
 
       trello_poster.post!(
         "https://github.com/gov-test-org/project-a/pull/2", "efgh5678", false

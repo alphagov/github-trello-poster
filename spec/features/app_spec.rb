@@ -1,112 +1,82 @@
 require "spec_helper"
-RSpec.describe GithubTrelloPoster do
+RSpec.describe App do
   include Rack::Test::Methods
 
   def app
-    GithubTrelloPoster.new
+    App.new
   end
 
   describe "GET '/'" do
-    it "returns 200 response" do
+    it "returns an HTTP 200" do
       response = get "/"
       expect(response.status).to eq(200)
     end
   end
 
-  describe "POST payload" do
-    before do
-      stub_request(:get, %r{https://api.github.com/repositories/*})
-      allow(GitHubPullRequest).to receive(:new).with(github_pull_request_params)
-        .and_return(github_pull_request)
-      allow(github_pull_request).to receive(:call)
+  describe "POST /payload" do
+    let(:response) do
+      post "/payload", payload, { "Content-Type" => "application/json" }
     end
 
-    let(:trello_poster) { TrelloPoster }
-    let(:github_pull_request_params) do
-      {
-        closed: false,
-        pull_request_id: 1,
-        repo_id: 1234,
-        trello_poster: trello_poster,
-      }
-    end
-
-    let(:github_pull_request) { instance_double("GitHubPullRequest") }
-    let(:payload) do
-      {
-        "action": "open",
-        "number": 1,
-        "repository": {
-          "id": 1234,
-        },
-      }.to_json
-    end
-
-    context "valid GitHub pull request payload is received" do
-      it "successfully instantiates GitHubPullRequest" do
-        expect(GitHubPullRequest).to receive(:new)
-          .with(github_pull_request_params)
-        expect(github_pull_request).to receive(:call)
-
-        post "/payload", payload, { "CONTENT_TYPE" => "application/json" }
-      end
-
-      it "returns a 200 status" do
-        response = post "/payload", payload,
-                        { "CONTENT_TYPE" => "application/json" }
-
-        expect(response.status).to eq(200)
-        expect(response.body).to be_empty
-      end
-    end
-
-    context "invalid GitHub pull request payload is received" do
-      let(:invalid_payload) { { "stuff": "things" }.to_json }
-
-      it "does not successfully instantiate GitHubPullRequest" do
-        expect(GitHubPullRequest).not_to receive(:new)
-
-        post "/payload", invalid_payload,
-             { "CONTENT_TYPE" => "application/json" }
-      end
-
-      it "returns a 400 error" do
-        response = post "/payload", invalid_payload,
-                        { "CONTENT_TYPE" => "application/json" }
-
-        expect(response.status).to eq(400)
-        expect(response.body).to eq("Required payload fields missing")
-      end
-    end
-
-    context "PR review is requested" do
-      # Github sends two payloads when a PR review is requested, so this ensures
-      # only one payload is processed
-      let(:review_requested_payload) do
+    context "when payload is valid and contains a Trello card link" do
+      let(:card_id) { "12345678" }
+      let(:pr_url) { "https://github.com/foo/bar" }
+      let(:payload) do
         {
-          "action": "review_requested",
-          "number": 1,
-          "repository": {
-            "id": 1234,
-          },
+          "action": action,
+          "body": "[Trello card](https://trello.com/c/#{card_id}/123-hello-world)",
+          "html_url": pr_url,
         }.to_json
       end
 
-      it "does not successfull instantiate GitHubPullRequest" do
-        expect(GitHubPullRequest).to receive(:new).once
+      %w[opened closed edited].each do |action|
+        context "when action is '#{action}'" do
+          let(:action) { action }
 
-        post "/payload", payload, { "CONTENT_TYPE" => "application/json" }
-
-        post "/payload", review_requested_payload,
-             { "CONTENT_TYPE" => "application/json" }
+          it "calls TrelloPoster#post! and returns an HTTP 200" do
+            trello_poster = instance_double(TrelloPoster)
+            allow(TrelloPoster).to receive(:new).and_return(trello_poster)
+            expect(trello_poster).to receive(:post!).with(pr_url, card_id, action == "closed")
+            expect(response.status).to eq(200)
+            expect(response.body).to eq("OK")
+          end
+        end
       end
 
-      it "returns a 200 status and 'Not processing payload' message" do
-        response = post "/payload", review_requested_payload,
-                        { "CONTENT_TYPE" => "application/json" }
+      context "when action is 'review_requested'" do
+        let(:action) { "review_requested" }
 
+        it "returns an HTTP 200 and does not instantiate TrelloPoster" do
+          expect(TrelloPoster).not_to receive(:new)
+          expect(response.status).to eq(200)
+          expect(response.body).to eq("Skip: review_requested events are ignored")
+        end
+      end
+    end
+
+    context "when payload is valid but does not contain a Trello card link" do
+      let(:payload) do
+        {
+          "action": "open",
+          "body": "Hello world!",
+          "html_url": "https://github.com/foo/bar",
+        }.to_json
+      end
+
+      it "returns an HTTP 200 and does not instantiate TrelloPoster" do
+        expect(TrelloPoster).not_to receive(:new)
         expect(response.status).to eq(200)
-        expect(response.body).to eq("Not processing payload")
+        expect(response.body).to eq("Skip: PR description doesn't contain Trello link")
+      end
+    end
+
+    context "when payload is invalid" do
+      let(:payload) { { "stuff": "things" }.to_json }
+
+      it "returns an HTTP 400 and does not instantiate TrelloPoster" do
+        expect(TrelloPoster).not_to receive(:new)
+        expect(response.status).to eq(400)
+        expect(response.body).to eq("Error: Required payload fields missing")
       end
     end
   end

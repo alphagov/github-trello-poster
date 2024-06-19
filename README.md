@@ -21,7 +21,6 @@ This app is built using Ruby and Sinatra.  It makes use of GitHub webhooks to re
 
 ### Setting up the app
 1. Run `bundle install`.
-1. Get your [GitHub access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) and assign to the `GITHUB_ACCESS_TOKEN` environment variable. On GOV.UK, we use a token associated with the govuk-ci user.
 1. Create a Trello account and add it to your team's Trello board, giving read and write access. On GOV.UK, we use the [@pullrequestposter](https://trello.com/u/pullrequestposter) user.
 1. Get your [Trello developer API key](https://trello.com/app-key) and assign to the `TRELLO_PUBLIC_KEY` environment variable. You may also find this key using [ruby-trello's](https://github.com/jeremytregunna/ruby-trello) helpful methods.
 1. Get your [Trello user token](https://developers.trello.com/authorize) and assign to the `TRELLO_MEMBER_TOKEN` environment variable. You may also find this token using [ruby-trello's](https://github.com/jeremytregunna/ruby-trello) helpful methods.
