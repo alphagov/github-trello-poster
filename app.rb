@@ -17,15 +17,23 @@ class App < Sinatra::Base
   post "/payload" do
     payload = JSON.parse(request.body.read)
 
-    return [400, "Error: Required payload fields missing"] unless %w[action body html_url].all? { |k| payload.key? k }
+    return [400, "Error: Required payload fields missing"] unless has_required_fields?(payload)
 
     return [200, "Skip: review_requested events are ignored"] if payload["action"] == "review_requested"
 
-    trello_card_id = payload["body"].match(%r{https://trello.com/c/(\w{8})}) { |m| m[1] }
+    trello_card_id = payload["pull_request"]["body"].match(%r{https://trello.com/c/(\w{8})}) { |m| m[1] }
     return [200, "Skip: PR description doesn't contain Trello link"] if trello_card_id.nil?
 
-    TrelloPoster.new.post!(payload["html_url"], trello_card_id, payload["action"] == "closed")
+    TrelloPoster.new.post!(payload["pull_request"]["html_url"], trello_card_id, payload["action"] == "closed")
     return [200, "OK"]
+  end
+
+  def has_required_fields?(payload)
+    [
+      %w[action],
+      %w[pull_request body],
+      %w[pull_request html_url],
+    ].all? { |k| payload.dig(*k).present? }
   end
 
   # start the server if ruby file executed directly

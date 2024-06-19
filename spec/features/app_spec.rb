@@ -24,8 +24,10 @@ RSpec.describe App do
       let(:payload) do
         {
           "action": action,
-          "body": "[Trello card](https://trello.com/c/#{card_id}/123-hello-world)",
-          "html_url": pr_url,
+          "pull_request": {
+            "body": "[Trello card](https://trello.com/c/#{card_id}/123-hello-world)",
+            "html_url": pr_url,
+          },
         }.to_json
       end
 
@@ -58,8 +60,10 @@ RSpec.describe App do
       let(:payload) do
         {
           "action": "open",
-          "body": "Hello world!",
-          "html_url": "https://github.com/foo/bar",
+          "pull_request": {
+            "body": "Hello world!",
+            "html_url": "https://github.com/foo/bar",
+          },
         }.to_json
       end
 
