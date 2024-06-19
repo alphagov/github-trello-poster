@@ -33,7 +33,7 @@ class App < Sinatra::Base
       %w[action],
       %w[pull_request body],
       %w[pull_request html_url],
-    ].all? { |k| payload.dig(*k).present? }
+    ].all? { |k| !payload.dig(*k).nil? }
   end
 
   # start the server if ruby file executed directly
