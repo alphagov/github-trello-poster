@@ -26,7 +26,7 @@ private
   def find_or_create_pr_checklist(trello_card)
     trello_card
       .checklists
-      .find { |c| ["pull requests", "prs"].include? c }
+      .find { |c| ["pull requests", "prs"].include? c.name.downcase }
       .then { |c| c || client.create(:checklist, "name" => "Pull Requests", "idCard" => trello_card.id) }
   end
 
