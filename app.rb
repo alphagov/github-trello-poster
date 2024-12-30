@@ -16,6 +16,7 @@ class App < Sinatra::Base
   end
 
   post "/payload" do
+    request.body.rewind
     payload = JSON.parse(request.body.read)
 
     return [400, "Error: Required payload fields missing"] unless has_required_fields?(payload)
