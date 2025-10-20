@@ -1,5 +1,5 @@
-# GitHub-Trello-Poster
-![Build Status](https://app.travis-ci.com/emmabeynon/github-trello-poster.svg?branch=master)
+# GitHub-Trello-Poster (Retired)
+**This repo has been archived as we no longer use Trello.**
 
 This app uses GitHub webhooks to be notified when a Pull Request is opened or changed on GitHub.  When it finds a link to a Trello card in the Pull Request, it posts a link to that Pull Request to a checklist on the card it finds.  When a Pull Request is merged or closed, the app checks the Pull Request off the checklist, even in cases where a user may have modified the item in the checklist.
 
